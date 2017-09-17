@@ -18,7 +18,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="goni.cpp">
+    <ClCompile Include="goini.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

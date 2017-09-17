@@ -65,7 +65,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="goni.cpp" />
+    <ClCompile Include="goini.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dll_def.h" />
