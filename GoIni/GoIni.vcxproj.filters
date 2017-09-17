@@ -15,18 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="goini.cpp">
+    <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="gosni.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="goini.h">
+    <ClInclude Include="dll_def.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dll_def.h">
+    <ClInclude Include="gosini.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

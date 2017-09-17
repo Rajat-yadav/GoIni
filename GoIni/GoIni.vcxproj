@@ -65,11 +65,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="goini.cpp" />
+    <ClCompile Include="gosni.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dll_def.h" />
-    <ClInclude Include="goini.h" />
+    <ClInclude Include="gosini.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
