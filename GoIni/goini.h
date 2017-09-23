@@ -35,6 +35,10 @@ public:
 	// Needed because you can inherit from this class.
 	GOCALL virtual ~GoIni(); 
 
+	// Returns false if GoIni is not Ready for Functioning. 
+	// Otherwise returns true;
+	GOCALL bool isReady();
+
 	// Loads File for Reading
 	// If the File is opened successfully then it returns true
 	// Else it return false
@@ -47,6 +51,15 @@ public:
 
 	// Works same as getCString but returns a std::string in place of char*
 	GOCALL std::string getString(const char* section_name,const char* key_name,const std::string& default_value);
+
+	// Returns a Int value 
+	GOCALL long getInt(const char* section_name, const char* key_name, int default_value);
+
+	GOCALL bool getBoolean(const char* section_name, const char* key_name, bool default_value);
+
+	GOCALL double getDouble(const char* section_name, const char* key_name, double default_value);
+
+	GOCALL std::string getError() const;
 	
 	// Disables inline comments 
 	GOCALL void donotAllowComments();
@@ -66,12 +79,15 @@ private:
 	GOCALL char* findCharsOrComments(const char* s, const char* chars);
 
 	GOCALL void removeChar(char*s, char _char);
+
+	GOCALL void setError(const std::string& error, int line_num);
 	
+	std::string error;
+	std::string file_name;
+
 	// Configuration Variables
 	bool GO_INI_ALLOW_INLINE_COMMENTS;
 	bool GO_INI_ALLOW_SPECIAL_STRING_PARSING;
-
-	std::fstream file;
 	
 	std::map<std::string, std::string> ini_data_handler;
 };

@@ -8,11 +8,16 @@
 
 int main()
 {
-	GoIni s;
-	s = "test.ini";
-	std::string ds = s.getString("test", "rokii", "dsass");
-	std::cout << ds;
-	const char* sd = s.getCString("test", "pok", "ldkldsdd");
+	GoIni s("test.ini");
+	char* sd = s.getCString("test", "poke", "ldkldsdd");
+	std::string ds = s.getCString("test", "roki", "dsass");
+	double x = s.getDouble("test", "intv", 0.23);
+	std::cout << ds << std::endl;
+	if (ds == "dsass")
+	{
+		std::cout << s.getError() << std::endl;
+	}
+	std::cout << x << std::endl;
 	std::cout << sd;
 	system("PAUSE");
     return 0;

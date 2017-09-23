@@ -1,5 +1,9 @@
 #include "goini.h"
 
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
+
 #include <sstream>
 #include <iostream>
 
@@ -14,7 +18,7 @@ GoIni::GoIni(const char* value)
 	: GO_INI_ALLOW_INLINE_COMMENTS(true),
 	GO_INI_ALLOW_SPECIAL_STRING_PARSING(true)
 {
-	this->file.open(value, std::ios::in|std::ios::out);
+	this->file_name = value;
 }
 
 GoIni::~GoIni()
@@ -22,26 +26,24 @@ GoIni::~GoIni()
 
 }
 
+bool GoIni::isReady()
+{
+	if (this->file_name == "" && this->error != "")
+		return false;
+	return true;
+}
+
 bool GoIni::loadFile(const char * file_name)
 {
-	if (this->file.is_open()) {
-		this->file.close();
-		this->file.clear();
-	}
-
-	this->file.open(file_name, std::ios::in | std::ios::out);
-
-	if (!this->file.is_open())
-		return false;
-
+	this->file_name = file_name;
 	return true;
 }
 
 char* GoIni::getCString(const char * section_name, const char * key_name, const char * default_value) {
 
 	int track = 0;
-	int error = 0;
-	char line[250];
+	char line[200];
+	std::fstream file(this->file_name);
 	char section[50] = "";
 	char* start;
 	char* spec_start;
@@ -49,9 +51,16 @@ char* GoIni::getCString(const char * section_name, const char * key_name, const 
 	char* name;
 	char* value;
 
-	this->file.seekg(0);
+	if (!file.is_open())
+	{
+		std::stringstream errorbuf;
+		errorbuf << "Couldn't Able to Open File: " << file_name;
 
-	while (this->file.getline(line, sizeof(line))) {
+		this->error = errorbuf.str();
+		return _strdup(default_value);
+	}
+
+	while (file.getline(line, sizeof(line))) {
 		track++;
 		start = line;
 		start = letterSkip(returnStrip(start));
@@ -62,10 +71,14 @@ char* GoIni::getCString(const char * section_name, const char * key_name, const 
 		else if (*start == '[') {
 			end = findCharsOrComments(start + 1, "]");
 			if (*end != ']')
-				error = track;
+			{
+				std::string error = start;
+				setError(error + " is not a valid section name. ] is missing. See online documentation of GoIni.", track);
+				return _strdup(default_value);
+			}
 			else {
 				*end = '\0';
-				strncpy_s(section, start + 1, sizeof(section));
+				strncpy(section, start + 1, sizeof(section));
 				section[sizeof(section) - 1] = '\0';
 			}
 		}
@@ -80,7 +93,7 @@ char* GoIni::getCString(const char * section_name, const char * key_name, const 
 
 				if (this->GO_INI_ALLOW_SPECIAL_STRING_PARSING)
 				{
-					if (!strcmp(key_name,name),!strcmp(section,section_name))
+					if (!strcmp(key_name, name) && !strcmp(section, section_name))
 					{
 						if (*value == '\"')
 						{
@@ -91,19 +104,55 @@ char* GoIni::getCString(const char * section_name, const char * key_name, const 
 								if (*spec_start == '\\')
 								{
 									spec_start++;
-									if (*spec_start = 'n')
+									if (*spec_start == 'n')
 									{
 										removeChar(spec_start, 'n');
-										*(spec_start-1) = '\n';
+										*(spec_start - 1) = '\n';
 									}
+									else if (*spec_start == 't')
+									{
+										removeChar(spec_start, 't');
+										*(spec_start - 1) = '\t';
+									}
+									else if (*spec_start == '0')
+									{
+										removeChar(spec_start, '0');
+										*(spec_start - 1) = '\0';
+									}
+									else if (*spec_start == 'b')
+									{
+										removeChar(spec_start, 'b');
+										*(spec_start - 1) = '\b';
+									}
+									else if (*spec_start == 'v')
+									{
+										removeChar(spec_start, 'v');
+										*(spec_start - 1) = '\v';
+									}
+									else if (*spec_start == 'a')
+									{
+										removeChar(spec_start, 'a');
+										*(spec_start - 1) = '\a';
+									}
+									else if (*spec_start == 'r')
+									{
+										removeChar(spec_start, 'r');
+										*(spec_start - 1) = '\r';
+									}
+									else if (*spec_start == 'f')
+									{
+										removeChar(spec_start, 'f');
+										*(spec_start - 1) = '\f';
+									}
+									else
+										error = track;
 								}
 								spec_start = findCharsOrComments(value, "\\");
 								if (*spec_start == '\\')
 									continue;
-								else break;
+								else removeChar(end, '\"');
 							}
 							removeChar(value, '\"');
-							removeChar(end, '\"');
 						}
 					}
 				}
@@ -116,26 +165,65 @@ char* GoIni::getCString(const char * section_name, const char * key_name, const 
 
 				returnStrip(value);
 
-				if (!strcmp(name,key_name))
+				if (!strcmp(section, section_name) && !strcmp(name, key_name))
 				{
-					if (!strcmp(section,section_name))
-						break;
+					return _strdup(value);
+				}
+				else
+				{
+					if (!strcmp(section, section_name))
+						this->error = "In File " + this->file_name + " in section " + section_name + " no key named " + key_name + " found.";
+					else 
+						this->error = "In File " + this->file_name + " no section named " + section_name + " found.";
 				}
 			}
-		  
 		}
 	}
-	
-	if (strcmp(name,key_name))
 		return _strdup(default_value);
-
-		return _strdup(value);
 }
 
 std::string GoIni::getString(const char * section_name, const char * key_name, const std::string & default_value)
 {
 	std::string value = getCString(section_name, key_name, default_value.c_str());
 	return value;
+}
+
+long GoIni::getInt(const char * section_name, const char * key_name, int default_value)
+{
+	std::stringstream buffer;
+	buffer << default_value;
+	std::string valuestr = getCString(section_name,key_name,buffer.str().c_str());
+	const char* value = valuestr.c_str();
+	char* end;
+	long rvalue = strtol(value, &end, 0);
+	return end > value ? rvalue : default_value;
+}
+
+bool GoIni::getBoolean(const char * section_name, const char * key_name, bool default_value)
+{
+	std::string valstr = getString(section_name,key_name,"");
+	// Convert to lower case to make string comparisons case-insensitive
+	std::transform(valstr.begin(), valstr.end(), valstr.begin(), ::tolower);
+	if (valstr == "true" || valstr == "yes" || valstr == "on" || valstr == "1")
+		return true;
+	else if (valstr == "false" || valstr == "no" || valstr == "off" || valstr == "0")
+		return false;
+	else
+		return default_value;
+}
+
+double GoIni::getDouble(const char * section_name, const char * key_name, double default_value)
+{
+	std::string valstr = getString(section_name, key_name, "");
+	const char* value = valstr.c_str();
+	char* end;
+	double n = strtod(value, &end);
+	return end > value ? n : default_value;
+}
+
+std::string GoIni::getError() const
+{
+	return this->error;
 }
 
 void GoIni::donotAllowComments()
@@ -145,8 +233,7 @@ void GoIni::donotAllowComments()
 
 inline GoIni & GoIni::operator=(const char * right)
 {
-	(this->file.is_open()) ? this->file.close(), this->file.clear() : 0;
-	this->file.open(right, std::ios::in | std::ios::out);
+	this->file_name = right;
 	return *(this);
 }
 
@@ -189,17 +276,24 @@ void GoIni::removeChar(char * s, char _char)
 	char* dest = s;
 	int index = 0;
 	size_t size = strlen(s);
-	size_t comp = 0;
-	while (*src != _char && size >= comp)
+
+	while (*src != _char && index != size)
 	{
 		src++;
-		comp++;
 		index++;
 	}
 	if (*src == _char)
 	{
-		memmove(&dest[index], &dest[index + 1], strlen(dest - index));
+		memcpy(&dest[index], &dest[index + 1], strlen(dest - index));
 		return;
 	}
 	return;
+}
+
+void GoIni::setError(const std::string & error, int line_num)
+{
+	std::stringstream buffer;
+	buffer << line_num;
+	this->error = "In File " + this->file_name + " At Line " + buffer.str() + " " + error;
+	return void();
 }
